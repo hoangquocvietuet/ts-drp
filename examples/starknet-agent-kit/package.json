@@ -1,0 +1,13 @@
+{
+ "name": "ts-drp-example-grid",
+ "version": "0.7.0",
+ "license": "MIT",
+ "scripts": {
+ },
+ "dependencies": {
+ },
+ "devDependencies": {
+  "@types/node": "^22.5.4",
+  "typescript": "^5.5.4"
+ }
+}
