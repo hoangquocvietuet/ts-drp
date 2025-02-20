@@ -1,92 +1,70 @@
-import { ActionType, DRP, ResolveConflictsType, SemanticsType, Vertex } from "../../../packages/object/dist/src/index.js";
+import {
+	ActionType,
+	DRP,
+	ResolveConflictsType,
+	SemanticsType,
+	Vertex,
+} from "../../../packages/object/dist/src/index.js";
 
-interface UserMessage {
-    from: string;
-    id: string;
-    content: string;
-}
-
-interface AgentMessage {
-    from: string; 
-    id: string;
-    request_id?: string;
-    content: string;
-    need_response: boolean;
+export interface Message {
+	peerId: string;
+	from: "user" | "agent";
+	messageId: string;
+	content: string;
+	parentMessageId?: string;
+	end?: boolean;
 }
 
 export class ChatDRP implements DRP {
-    semanticsType = SemanticsType.pair;
-    agentMessages: AgentMessage[];
-    userMessages: UserMessage[];
-    
+	semanticsType = SemanticsType.pair;
+	messages: Message[];
+
 	resolveConflicts(_: Vertex[]): ResolveConflictsType {
 		return { action: ActionType.Nop };
 	}
 
-    constructor() {
-        this.agentMessages = [];       
-        this.userMessages = [];
-    }
+	constructor() {
+		this.messages = [];
+	}
 
-    newAgentMessage({
-        from,
-        id,
-        request_id,
-        content,
-        need_response,
-    }: {
-        from: string;
-        id: string;
-        request_id?: string;
-        content: string;
-        need_response: boolean;
-    }): void {
-        this.agentMessages.push({
-            from,
-            id,
-            request_id,
-            content,
-            need_response
-        });
-    }
+	newMessage(message: Message) {
+		this.messages.push(message);
+	}
 
-    newUserMessage({
-        from,
-        id,
-        content
-    }: {
-        from: string;
-        id: string;
-        content: string;
-    }): void {
-        this.userMessages.push({
-            from,
-            id,
-            content
-        });
-    }
+	query_conversation(peerId: string) {
+		const userMessages = this.messages.filter(
+			(message) => message.peerId === peerId && message.from === "user"
+		);
+		const conversation = [];
+		for (const message of userMessages) {
+			const firstMessage = message;
+			let currentMessage = firstMessage;
+			while (currentMessage) {
+				conversation.push(currentMessage);
+				const nextMessage = this.messages.find(
+					(message) => message.parentMessageId === currentMessage.messageId
+				);
+				if (!nextMessage) break;
+				currentMessage = nextMessage;
+			}
+		}
+		return conversation;
+	}
 
-    query_unrespondedMessages = (from: string) => {
-        const notFrom = this.agentMessages.filter((m) => m.from !== from);
-        return notFrom.filter((m) => !this.agentMessages.some((m2) => m2.request_id === m.id) && m.need_response === true);
-    }
-
-    query_conversation = (from: string) => {
-        const conversation = [];
-        const userMessages = this.userMessages.filter((m) => m.from === from);
-        console.log('userMessages:', userMessages);
-        for (const userMessage of userMessages) {
-            conversation.push(`User ${userMessage.from}: ${userMessage.content}`);
-            const agentMessage = this.agentMessages.find((m) => m.request_id === userMessage.id);
-            if (agentMessage) {
-                conversation.push(`Agent ${agentMessage.from}: ${agentMessage.content}`);
-                const agentReply = this.agentMessages.find((m) => m.request_id === agentMessage.id);
-                if (agentReply) {
-                    conversation.push(`Agent ${agentReply.from}: ${agentReply.content}`);
-                }
-            }
-            conversation.push('\n');
-        }
-        return conversation;
-    }
+	query_unresponded_conversations(_peerId: string) {
+		const allPeerId = this.messages.map((message) => message.peerId);
+		// unique peerId
+		const uniquePeerId = [...new Set(allPeerId)];
+		const conversations = [];
+		for (const peerId of uniquePeerId) {
+			if (peerId === _peerId) continue;
+			const conversation = this.query_conversation(peerId);
+			const lastMessage = conversation[conversation.length - 1];
+			if (lastMessage.peerId === peerId) continue;
+			if (!lastMessage.end) {
+				conversations.push(conversation);
+			}
+		}
+		return conversations;
+	}
 }
