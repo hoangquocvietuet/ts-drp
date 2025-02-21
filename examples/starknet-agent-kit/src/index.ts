@@ -56,6 +56,7 @@ async function processRequest(input: string) {
 		from: "user",
 		messageId: userMessageId,
 		content: input,
+        end: false,
 	});
 	const response = await getResponse(userPrompt(input));
 	const agentMessageId = Math.random().toString(36).substring(7);
@@ -65,11 +66,12 @@ async function processRequest(input: string) {
 		messageId: agentMessageId,
 		content: response,
 		parentMessageId: userMessageId,
+        end: (response as string).includes("No")? false: true,
 	});
 }
 
 function composeState(conversation: Message[]) {
-	let res = "# Context\n";
+	let res = "# Conversation\n";
 	for (const message of conversation) {
 		res += `${message.from} ${message.peerId}: ${message.content}\n`;
 	}
@@ -90,6 +92,7 @@ async function tryAnswer() {
 				messageId: newMessageId,
 				content: response,
 				parentMessageId: lastMessage.messageId,
+                end: true,
 			});
 		}
 

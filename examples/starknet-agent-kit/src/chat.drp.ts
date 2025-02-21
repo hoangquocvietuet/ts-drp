@@ -12,7 +12,7 @@ export interface Message {
 	messageId: string;
 	content: string;
 	parentMessageId?: string;
-	end?: boolean;
+	end: boolean;
 }
 
 export class ChatDRP implements DRP {
@@ -69,8 +69,10 @@ export class ChatDRP implements DRP {
 		for (const peerId of uniquePeerId) {
 			if (peerId === _peerId) continue;
 			const conversation = this.query_conversation(peerId);
+            if (conversation.length === 0) continue;
 			const lastMessage = conversation[conversation.length - 1];
-			if (lastMessage.peerId === peerId) continue;
+			if (lastMessage.peerId === _peerId) continue;
+            if (lastMessage.from === 'user') continue;
 			if (!lastMessage.end) {
 				conversations.push(conversation);
 			}
