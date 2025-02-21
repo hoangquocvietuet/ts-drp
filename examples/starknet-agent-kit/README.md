@@ -27,3 +27,10 @@ Then other peers will read all conversation and give the answer:
 ```
 agent 12D3KooWCjZ2ZarBFi9F8h19ehkKYiXmR4XFvTWWCxMdvCvNN3cu: Current Starknet block number is: 1167076
 ```
+
+# How to run:
+
+- Have an agent hosted api `<url>`.
+- `pnpm install`
+- `tsc`
+- `node src/index.js <url>`. We hosted one: `https://starknet-agent-kit-production.up.railway.app/api/key/request` 

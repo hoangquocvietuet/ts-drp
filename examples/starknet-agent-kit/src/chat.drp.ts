@@ -31,6 +31,11 @@ export class ChatDRP implements DRP {
 		this.messages.push(message);
 	}
 
+    /*
+        Get all messages from a specific peer
+        First message is the message from the user
+        Subsequent messages are the messages from the agent. They are linked with the parentMessageId
+    */
 	query_conversation(peerId: string) {
 		const userMessages = this.messages.filter(
 			(message) => message.peerId === peerId && message.from === "user"
@@ -51,6 +56,11 @@ export class ChatDRP implements DRP {
 		return conversation;
 	}
 
+    /*
+        Get all conversations that have not been responded to
+        Unresponded conversations are conversations where the last message is not end and is not from current peer
+        End state is set by the agent
+    */
 	query_unresponded_conversations(_peerId: string) {
 		const allPeerId = this.messages.map((message) => message.peerId);
 		// unique peerId
